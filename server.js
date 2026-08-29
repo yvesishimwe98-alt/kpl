@@ -37,15 +37,23 @@ app.use("/api/visitors", visitorRoutes);
 app.use("/api/stats", statsRoutes);
 
 // --- Static frontend ---
-const publicDir = path.join(__dirname, "public");
-app.use(express.static(publicDir));
+// No "public" folder: pages live at the project root alongside server.js,
+// but only /css and /js are ever exposed over HTTP. server.js, package.json,
+// .env and src/ stay unreachable because nothing mounts a static route for
+// the whole root directory.
+app.use("/css", express.static(path.join(__dirname, "css")));
+app.use("/js", express.static(path.join(__dirname, "js")));
 
-// Pages that require a logged-in session; login.html itself stays public.
+app.get("/login.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "login.html"));
+});
+
+// Pages that require a logged-in session.
 const protectedPages = ["checkin", "dashboard", "history", "stats", "staff"];
 protectedPages.forEach((page) => {
   app.get(`/${page}`, (req, res) => {
     if (!req.session || !req.session.userId) return res.redirect("/login.html");
-    res.sendFile(path.join(publicDir, `${page}.html`));
+    res.sendFile(path.join(__dirname, `${page}.html`));
   });
 });
 
