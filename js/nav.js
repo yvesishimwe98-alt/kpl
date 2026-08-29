@@ -19,7 +19,7 @@ async function renderNav(active) {
 
   host.innerHTML = `
     <nav class="topnav">
-      <div class="brand"><img src="img/kpl-logo.svg" alt="" class="brand-logo" />KPL Visitor Register</div>
+      <div class="brand"><img src="img/kpl-logo.jpg" alt="" class="brand-logo" />KPL Visitor Register</div>
       <div class="nav-links">
         ${links
           .map(
