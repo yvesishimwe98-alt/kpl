@@ -21,7 +21,7 @@ router.get("/summary", requireAuth, (req, res) => {
   const totalVisitorsKnown = db.prepare(`SELECT COUNT(*) AS n FROM visitors`).get().n;
 
   const computersInUse = db
-    .prepare(`SELECT COUNT(*) AS n FROM visits WHERE status = 'in' AND computer_serial IS NOT NULL`)
+    .prepare(`SELECT COUNT(*) AS n FROM visits WHERE status = 'in' AND computer_serial IS NOT NULL AND computer_serial != ''`)
     .get().n;
 
   res.json({
@@ -61,21 +61,6 @@ router.get("/daily", requireAuth, (req, res) => {
        WHERE check_in_time >= datetime('now', '-14 days')
        GROUP BY day
        ORDER BY day`
-    )
-    .all();
-  res.json(rows);
-});
-
-// Most-used computers.
-router.get("/computers", requireAuth, (req, res) => {
-  const rows = db
-    .prepare(
-      `SELECT computer_serial, COUNT(*) AS count
-       FROM visits
-       WHERE computer_serial IS NOT NULL AND computer_serial != ''
-       GROUP BY computer_serial
-       ORDER BY count DESC
-       LIMIT 15`
     )
     .all();
   res.json(rows);

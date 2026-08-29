@@ -1,44 +1,30 @@
-async function renderNav(active) {
+async function renderNav(pageTitle) {
   const host = document.getElementById("nav-host");
   if (!host) return;
 
-  let user = null;
   try {
-    user = await Api.get("/auth/me");
+    await Api.get("/auth/status");
   } catch (e) {
-    return; // api.js already redirects to login on 401
+    return; // api.js already redirects to the passcode page on 401
   }
-
-  const links = [
-    { key: "checkin", href: "/checkin", label: "Check In / Out" },
-    { key: "dashboard", href: "/dashboard", label: "In the Library" },
-    { key: "history", href: "/history", label: "History" },
-    { key: "stats", href: "/stats", label: "Insights" },
-  ];
-  if (user.role === "admin") links.push({ key: "staff", href: "/staff", label: "Staff" });
 
   host.innerHTML = `
     <nav class="topnav">
-      <div class="brand"><img src="img/kpl-logo.jpg" alt="" class="brand-logo" />KPL Visitor Register</div>
+      <a href="/" class="brand"><img src="img/kpl-logo.jpg" alt="" class="brand-logo" />KPL Visitor Register</a>
       <div class="nav-links">
-        ${links
-          .map(
-            (l) =>
-              `<a href="${l.href}" class="${l.key === active ? "active" : ""}">${l.label}</a>`
-          )
-          .join("")}
+        ${pageTitle ? `<span class="nav-page-title">${pageTitle}</span>` : ""}
       </div>
       <div class="nav-user">
-        <span>${user.full_name}</span>
-        <button id="logout-btn" class="btn-ghost">Log out</button>
+        <a href="/" class="btn-ghost">🏠 Home</a>
+        <button id="lock-btn" class="btn-ghost">Lock</button>
       </div>
     </nav>
   `;
 
-  document.getElementById("logout-btn").addEventListener("click", async () => {
-    await Api.post("/auth/logout");
-    window.location.href = "/login.html";
+  document.getElementById("lock-btn").addEventListener("click", async () => {
+    await Api.post("/auth/lock");
+    window.location.href = "/passcode.html";
   });
 
-  return user;
+  return true;
 }

@@ -1,29 +1,35 @@
 # KPL Visitor Register
 
 A digital replacement for the manuscript sign-in book at Kigali Public Library.
-Staff at the front desk check visitors in and out from a browser instead of a
-paper ledger — names, ID/passport number, phone, purpose of visit, and the
-serial number of any library computer used, with arrival and departure times
-recorded automatically.
+Anyone at the front desk unlocks the app with a shared passcode, then checks
+visitors in and out from a browser instead of a paper ledger — name, ID/passport
+number, and the serial number of the visitor's own laptop (visitors bring
+their own devices; the library doesn't provide computers) — with arrival and
+departure times recorded automatically.
 
 ## Why it's "smart", not just digital
 
-- **Autofill for returning visitors** — typing a name, ID or phone number
-  during check-in searches past visits and fills in the rest instantly.
+- **One shared passcode, no accounts to manage** — this app has a single
+  purpose (KPL's visitor register), so there's no per-staff login. Whoever
+  knows the passcode can use it.
+- **A small homepage links everything** — Check In, Check Out, Who's In,
+  History and Insights are all one click from `/`.
+- **Autofill for returning visitors** — typing a name or ID during check-in
+  searches past visits and fills in the rest instantly.
 - **Duplicate check-in prevention** — a visitor who is already checked in
-  (by ID number) can't be checked in a second time, and a computer already
-  assigned to someone can't be double-booked.
-- **Live "who's in the library" dashboard** — auto-refreshes every 15s, with
-  one-click check-out and a red "overdue" badge for anyone still checked in
-  past a configurable number of hours (e.g. they may have left without
-  signing out).
-- **Searchable history + CSV export** — filter by name, ID, computer serial,
-  date range or status, and export the filtered results for reporting or
-  the library's records.
-- **Usage insights** — busiest hours of the day, daily visit trends, and
-  most-used computers, to help plan staffing and computer allocation.
-- **Staff accounts** — each check-in/check-out is attributed to the staff
-  member who recorded it; admins can add/remove accounts.
+  (by ID number) can't be checked in a second time.
+- **Dedicated check-out flow** — search by name, ID or PC serial number, then
+  press one button to confirm the visitor is leaving.
+- **Live "who's in the library" view** — auto-refreshes every 15s, with a red
+  "overdue" badge for anyone still checked in past a configurable number of
+  hours (they may have left without checking out).
+- **Time first, date out of the way** — check-in/out screens show only the
+  time; every record is still timestamped underneath, and History groups
+  results under a date heading instead of repeating the date on every row.
+- **Searchable history + CSV export** — filter by name, ID, PC serial, date
+  range or status, and export the filtered results for reporting.
+- **Usage insights** — busiest hours of the day and daily visit trends, to
+  help plan staffing and opening hours.
 
 ## Requirements
 
@@ -34,40 +40,37 @@ recorded automatically.
 
 ```bash
 npm install
-cp .env.example .env    # then edit .env if needed
+cp .env.example .env    # then set ACCESS_PASSCODE (and SESSION_SECRET)
 npm start
 ```
 
-Open `http://localhost:3000`. On first run, a default admin account is
-created and printed to the console:
-
-```
-username: admin
-password: changeme123
-```
-
-**Log in and change this password immediately** (Staff page → Change My
-Password), and create named accounts for each staff member so check-ins are
-attributed correctly.
+Open `http://localhost:3000`, enter the passcode you set in `.env`, and
+you're on the homepage.
 
 ## Configuration (`.env`)
 
-| Variable         | Purpose                                                          |
-|-------------------|-------------------------------------------------------------------|
-| `PORT`            | Port the server listens on (default `3000`)                      |
-| `SESSION_SECRET`  | Random string used to sign login sessions — set a long unique value in production |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Default admin account created on first run only |
-| `OVERDUE_HOURS`   | Hours after which a still-checked-in visitor is flagged overdue on the dashboard (default `6`) |
+| Variable          | Purpose                                                          |
+|--------------------|-------------------------------------------------------------------|
+| `PORT`             | Port the server listens on (default `3000`)                      |
+| `SESSION_SECRET`   | Random string used to sign sessions — set a long unique value in production |
+| `ACCESS_PASSCODE`  | The shared front-desk passcode. Change this before deploying.    |
+| `OVERDUE_HOURS`    | Hours after which a still-checked-in visitor is flagged overdue (default `6`) |
 
 ## Project layout
 
 ```
 server.js            Express app entrypoint, sessions, static pages
-src/db.js             SQLite schema (users, visitors, visits)
-src/seed.js           Creates the default admin account on first run
-src/sessionStore.js   Login sessions persisted in SQLite (survive restarts)
-src/routes/           auth, visits (check-in/out, history, export), visitors (autofill), stats
-public/               Login, check-in, dashboard, history, insights and staff pages (no build step)
+src/db.js             SQLite schema (visitors, visits)
+src/sessionStore.js   Sessions persisted in SQLite (survive restarts)
+src/routes/           auth (passcode unlock/lock), visits (check-in/out, history, export), visitors (autofill), stats
+home.html              Hub page linking every page
+checkin.html           Name / ID / PC serial + autofill
+checkout.html          Search + confirm check-out
+dashboard.html         Live "who's in" view
+history.html           Date-grouped search history + CSV export
+stats.html             Busiest hours / daily trend charts
+passcode.html          Passcode gate
+css/, js/, img/        Stylesheet, shared scripts, logo (no build step)
 ```
 
 ## Deploying at the library

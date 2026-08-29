@@ -12,7 +12,7 @@
 
   <div class="page">
     <h1>Library Insights</h1>
-    <p class="subtitle">Usage patterns to help plan staffing, computers and opening hours.</p>
+    <p class="subtitle">Usage patterns to help plan staffing and opening hours.</p>
 
     <div class="grid grid-4" id="summary-cards">
       <div class="card stat-card"><div class="value">—</div><div class="label">Visits Today</div></div>
@@ -31,26 +31,12 @@
         <div class="chart-bar-row" id="daily-chart"></div>
       </div>
     </div>
-
-    <div class="card">
-      <h2 style="margin-top:0; font-size:1.05rem;">Most-Used Computers</h2>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Computer Serial</th><th>Times Used</th></tr></thead>
-          <tbody id="computers-body"><tr><td colspan="2" class="empty-state">Loading…</td></tr></tbody>
-        </table>
-      </div>
-    </div>
   </div>
 
   <script src="js/api.js"></script>
   <script src="js/nav.js"></script>
   <script>
-    renderNav("stats");
-
-    function escapeHtml(s) {
-      return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    }
+    renderNav("Insights");
 
     function renderBarChart(host, items, labelFn, valueFn) {
       const max = Math.max(1, ...items.map(valueFn));
@@ -69,11 +55,10 @@
 
     async function load() {
       try {
-        const [summary, hourly, daily, computers] = await Promise.all([
+        const [summary, hourly, daily] = await Promise.all([
           Api.get("/stats/summary"),
           Api.get("/stats/hourly"),
           Api.get("/stats/daily"),
-          Api.get("/stats/computers"),
         ]);
 
         const cards = document.querySelectorAll("#summary-cards .value");
@@ -95,13 +80,6 @@
           (d) => d.day.slice(5),
           (d) => d.count
         );
-
-        const body = document.getElementById("computers-body");
-        body.innerHTML = computers.length
-          ? computers
-              .map((c) => `<tr><td>${escapeHtml(c.computer_serial)}</td><td>${c.count}</td></tr>`)
-              .join("")
-          : '<tr><td colspan="2" class="empty-state">No computer usage recorded yet.</td></tr>';
       } catch (e) {
         // handled by api.js
       }

@@ -7,7 +7,7 @@ async function api(path, options = {}) {
   });
 
   if (res.status === 401) {
-    window.location.href = "/login.html";
+    window.location.href = "/passcode.html";
     throw new Error("Not authenticated");
   }
 

@@ -6,20 +6,20 @@ const { toCsv } = require("../utils/csv");
 const router = express.Router();
 const OVERDUE_HOURS = Number(process.env.OVERDUE_HOURS || 6);
 
-function findOrCreateVisitor({ full_name, id_number, phone }) {
+function findOrCreateVisitor({ full_name, id_number }) {
   if (!id_number) return null;
 
   const existing = db.prepare("SELECT * FROM visitors WHERE id_number = ?").get(id_number);
   if (existing) {
     db.prepare(
-      `UPDATE visitors SET full_name = ?, phone = COALESCE(?, phone), updated_at = datetime('now') WHERE id = ?`
-    ).run(full_name, phone || null, existing.id);
+      `UPDATE visitors SET full_name = ?, updated_at = datetime('now') WHERE id = ?`
+    ).run(full_name, existing.id);
     return existing.id;
   }
 
   const info = db
-    .prepare(`INSERT INTO visitors (full_name, id_number, phone) VALUES (?, ?, ?)`)
-    .run(full_name, id_number, phone || null);
+    .prepare(`INSERT INTO visitors (full_name, id_number) VALUES (?, ?)`)
+    .run(full_name, id_number);
   return info.lastInsertRowid;
 }
 
@@ -38,8 +38,6 @@ function decorateActive(row) {
 router.post("/checkin", requireAuth, (req, res) => {
   const full_name = (req.body?.full_name || "").trim();
   const id_number = (req.body?.id_number || "").trim() || null;
-  const phone = (req.body?.phone || "").trim() || null;
-  const purpose = (req.body?.purpose || "").trim() || null;
   const computer_serial = (req.body?.computer_serial || "").trim() || null;
 
   if (!full_name) return res.status(400).json({ error: "Full name is required" });
@@ -55,25 +53,14 @@ router.post("/checkin", requireAuth, (req, res) => {
     }
   }
 
-  if (computer_serial) {
-    const computerInUse = db
-      .prepare("SELECT full_name FROM visits WHERE computer_serial = ? AND status = 'in'")
-      .get(computer_serial);
-    if (computerInUse) {
-      return res.status(409).json({
-        error: `Computer "${computer_serial}" is already assigned to ${computerInUse.full_name} and hasn't been checked back in.`,
-      });
-    }
-  }
-
-  const visitor_id = findOrCreateVisitor({ full_name, id_number, phone });
+  const visitor_id = findOrCreateVisitor({ full_name, id_number });
 
   const info = db
     .prepare(
-      `INSERT INTO visits (visitor_id, full_name, id_number, phone, purpose, computer_serial, checked_in_by, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'in')`
+      `INSERT INTO visits (visitor_id, full_name, id_number, computer_serial, status)
+       VALUES (?, ?, ?, ?, 'in')`
     )
-    .run(visitor_id, full_name, id_number, phone, purpose, computer_serial, req.session.userId);
+    .run(visitor_id, full_name, id_number, computer_serial);
 
   const visit = db.prepare("SELECT * FROM visits WHERE id = ?").get(info.lastInsertRowid);
   res.status(201).json(decorateActive(visit));
@@ -87,8 +74,8 @@ router.post("/:id/checkout", requireAuth, (req, res) => {
   if (visit.status !== "in") return res.status(400).json({ error: "This visit is already checked out" });
 
   db.prepare(
-    `UPDATE visits SET status = 'out', check_out_time = datetime('now'), checked_out_by = ? WHERE id = ?`
-  ).run(req.session.userId, id);
+    `UPDATE visits SET status = 'out', check_out_time = datetime('now') WHERE id = ?`
+  ).run(id);
 
   const updated = db.prepare("SELECT * FROM visits WHERE id = ?").get(id);
   res.json(updated);
@@ -156,9 +143,7 @@ router.get("/export.csv", requireAuth, (req, res) => {
     { key: "id", label: "ID" },
     { key: "full_name", label: "Full Name" },
     { key: "id_number", label: "ID/Passport Number" },
-    { key: "phone", label: "Phone" },
-    { key: "purpose", label: "Purpose of Visit" },
-    { key: "computer_serial", label: "Computer Serial Number" },
+    { key: "computer_serial", label: "PC Serial Number" },
     { key: "check_in_time", label: "Check-in Time (UTC)" },
     { key: "check_out_time", label: "Check-out Time (UTC)" },
     { key: "status", label: "Status" },

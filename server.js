@@ -4,13 +4,17 @@ const express = require("express");
 const session = require("express-session");
 const SqliteSessionStore = require("./src/sessionStore");
 
-const { seedAdmin } = require("./src/seed");
 const authRoutes = require("./src/routes/auth");
 const visitRoutes = require("./src/routes/visits");
 const visitorRoutes = require("./src/routes/visitors");
 const statsRoutes = require("./src/routes/stats");
 
-seedAdmin();
+if (!process.env.ACCESS_PASSCODE) {
+  console.warn(
+    "WARNING: ACCESS_PASSCODE is not set in .env - nobody will be able to unlock the app. " +
+      "Copy .env.example to .env and set one."
+  );
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -45,22 +49,22 @@ app.use("/css", express.static(path.join(__dirname, "css")));
 app.use("/js", express.static(path.join(__dirname, "js")));
 app.use("/img", express.static(path.join(__dirname, "img")));
 
-app.get("/login.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "login.html"));
+app.get("/passcode.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "passcode.html"));
 });
 
-// Pages that require a logged-in session.
-const protectedPages = ["checkin", "dashboard", "history", "stats", "staff"];
+// Pages that require the passcode to have been entered.
+const protectedPages = ["checkin", "checkout", "dashboard", "history", "stats"];
 protectedPages.forEach((page) => {
   app.get(`/${page}`, (req, res) => {
-    if (!req.session || !req.session.userId) return res.redirect("/login.html");
+    if (!req.session || !req.session.unlocked) return res.redirect("/passcode.html");
     res.sendFile(path.join(__dirname, `${page}.html`));
   });
 });
 
 app.get("/", (req, res) => {
-  if (req.session && req.session.userId) return res.redirect("/dashboard");
-  res.redirect("/login.html");
+  if (req.session && req.session.unlocked) return res.sendFile(path.join(__dirname, "home.html"));
+  res.redirect("/passcode.html");
 });
 
 app.use((req, res) => {

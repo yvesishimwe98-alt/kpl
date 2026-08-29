@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign In – KPL Visitor Register</title>
+  <title>Enter Passcode – KPL Visitor Register</title>
   <link rel="icon" type="image/jpeg" href="img/kpl-logo.jpg" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -11,46 +11,42 @@
   <div class="auth-shell">
     <div class="auth-card">
       <h1><img src="img/kpl-logo.jpg" alt="" class="auth-logo" />Kigali Public Library</h1>
-      <p class="subtitle">Staff sign in — Visitor Register</p>
-      <form id="login-form">
+      <p class="subtitle">Visitor Register — enter the front-desk passcode</p>
+      <form id="passcode-form">
         <div class="field">
-          <label for="username">Username</label>
-          <input id="username" name="username" autocomplete="username" required autofocus />
-        </div>
-        <div class="field">
-          <label for="password">Password</label>
-          <input id="password" name="password" type="password" autocomplete="current-password" required />
+          <label for="passcode">Passcode</label>
+          <input id="passcode" name="passcode" type="password" inputmode="numeric" autocomplete="off" required autofocus />
         </div>
         <div class="error-text" id="error-text"></div>
-        <button class="btn" type="submit" id="submit-btn">Sign In</button>
+        <button class="btn" type="submit" id="submit-btn">Unlock</button>
       </form>
     </div>
   </div>
 
   <script src="js/api.js"></script>
   <script>
-    document.getElementById("login-form").addEventListener("submit", async (e) => {
+    document.getElementById("passcode-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const btn = document.getElementById("submit-btn");
       const errorEl = document.getElementById("error-text");
       errorEl.textContent = "";
       btn.disabled = true;
-      btn.textContent = "Signing in...";
+      btn.textContent = "Checking...";
       try {
-        const username = document.getElementById("username").value.trim();
-        const password = document.getElementById("password").value;
-        const res = await fetch("/api/auth/login", {
+        const passcode = document.getElementById("passcode").value;
+        const res = await fetch("/api/auth/unlock", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ passcode }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Login failed");
-        window.location.href = "/dashboard";
+        if (!res.ok) throw new Error(data.error || "Unlock failed");
+        window.location.href = "/";
       } catch (err) {
         errorEl.textContent = err.message;
         btn.disabled = false;
-        btn.textContent = "Sign In";
+        btn.textContent = "Unlock";
+        document.getElementById("passcode").select();
       }
     });
   </script>

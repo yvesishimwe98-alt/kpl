@@ -12,12 +12,12 @@
 
   <div class="page">
     <h1>Visit History</h1>
-    <p class="subtitle">Search, filter and export past check-ins — replaces the paper log book.</p>
+    <p class="subtitle">Grouped by day. Search, filter and export past check-ins.</p>
 
     <div class="card">
       <div class="filters">
         <div class="field">
-          <label for="q">Name / ID / Computer</label>
+          <label for="q">Name / ID / PC Serial</label>
           <input id="q" placeholder="Search…" />
         </div>
         <div class="field">
@@ -45,10 +45,10 @@
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Name</th><th>ID Number</th><th>Phone</th><th>Computer</th><th>Purpose</th><th>Check In</th><th>Check Out</th><th>Status</th></tr>
+            <tr><th>Name</th><th>ID Number</th><th>PC Serial</th><th>Check In</th><th>Check Out</th><th>Status</th></tr>
           </thead>
           <tbody id="rows">
-            <tr><td colspan="8" class="empty-state">Loading…</td></tr>
+            <tr><td colspan="6" class="empty-state">Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -60,14 +60,17 @@
   <script src="js/toast.js"></script>
   <script src="js/nav.js"></script>
   <script>
-    renderNav("history");
+    renderNav("History");
 
     function escapeHtml(s) {
       return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
-    function fmt(dt) {
+    function dayKey(dt) {
+      return new Date(dt + "Z").toLocaleDateString([], { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+    }
+    function timeOnly(dt) {
       if (!dt) return "—";
-      return new Date(dt + "Z").toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+      return new Date(dt + "Z").toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
 
     let page = 1;
@@ -96,23 +99,27 @@
         const { rows, total, pageSize } = await Api.get(`/visits?${params.toString()}`);
         const body = document.getElementById("rows");
         if (!rows.length) {
-          body.innerHTML = '<tr><td colspan="8" class="empty-state">No visits found for these filters.</td></tr>';
+          body.innerHTML = '<tr><td colspan="6" class="empty-state">No visits found for these filters.</td></tr>';
         } else {
-          body.innerHTML = rows
-            .map(
-              (v) => `
+          let lastDay = null;
+          const html = [];
+          for (const v of rows) {
+            const day = dayKey(v.check_in_time);
+            if (day !== lastDay) {
+              html.push(`<tr><td colspan="6" class="date-group-header">${day}</td></tr>`);
+              lastDay = day;
+            }
+            html.push(`
               <tr>
                 <td>${escapeHtml(v.full_name)}</td>
                 <td>${escapeHtml(v.id_number || "—")}</td>
-                <td>${escapeHtml(v.phone || "—")}</td>
                 <td>${escapeHtml(v.computer_serial || "—")}</td>
-                <td>${escapeHtml(v.purpose || "—")}</td>
-                <td>${fmt(v.check_in_time)}</td>
-                <td>${fmt(v.check_out_time)}</td>
+                <td>${timeOnly(v.check_in_time)}</td>
+                <td>${timeOnly(v.check_out_time)}</td>
                 <td><span class="badge ${v.status === "in" ? "badge-in" : "badge-out"}">${v.status === "in" ? "Still In" : "Checked Out"}</span></td>
-              </tr>`
-            )
-            .join("");
+              </tr>`);
+          }
+          body.innerHTML = html.join("");
         }
 
         const totalPages = Math.max(1, Math.ceil(total / pageSize));

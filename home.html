@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KPL Visitor Register</title>
+  <link rel="icon" type="image/jpeg" href="img/kpl-logo.jpg" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="nav-host"></div>
+
+  <div class="page">
+    <h1>Kigali Public Library</h1>
+    <p class="subtitle">Visitor Register — pick what you need to do.</p>
+
+    <div class="grid grid-2 home-grid">
+      <a href="checkin" class="card home-card">
+        <div class="home-card-icon">📝</div>
+        <div class="home-card-title">Check In</div>
+        <div class="home-card-desc">Register a new visitor arriving now.</div>
+      </a>
+      <a href="checkout" class="card home-card">
+        <div class="home-card-icon">✅</div>
+        <div class="home-card-title">Check Out</div>
+        <div class="home-card-desc">Confirm a visitor is leaving.</div>
+      </a>
+      <a href="dashboard" class="card home-card">
+        <div class="home-card-icon">👥</div>
+        <div class="home-card-title">Who's In</div>
+        <div class="home-card-desc">Live list of everyone currently in the library.</div>
+      </a>
+      <a href="history" class="card home-card">
+        <div class="home-card-icon">📜</div>
+        <div class="home-card-title">History</div>
+        <div class="home-card-desc">Search past visits and export records.</div>
+      </a>
+      <a href="stats" class="card home-card">
+        <div class="home-card-icon">📊</div>
+        <div class="home-card-title">Insights</div>
+        <div class="home-card-desc">Busiest hours and daily visit trends.</div>
+      </a>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script>
+    renderNav();
+  </script>
+</body>
+</html>

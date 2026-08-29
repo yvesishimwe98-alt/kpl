@@ -12,7 +12,7 @@
 
   <div class="page">
     <h1>Visitor Check-In</h1>
-    <p class="subtitle">Start typing a name, ID or phone number — returning visitors autofill instantly.</p>
+    <p class="subtitle">Start typing a name or ID — returning visitors autofill instantly.</p>
 
     <div class="grid grid-2">
       <div class="card">
@@ -23,26 +23,14 @@
             <div class="suggestions" id="suggestions" hidden></div>
           </div>
 
-          <div class="form-row">
-            <div class="field">
-              <label for="id_number">National ID / Passport Number</label>
-              <input id="id_number" name="id_number" autocomplete="off" />
-            </div>
-            <div class="field">
-              <label for="phone">Phone Number</label>
-              <input id="phone" name="phone" autocomplete="off" />
-            </div>
+          <div class="field">
+            <label for="id_number">National ID / Passport Number</label>
+            <input id="id_number" name="id_number" autocomplete="off" />
           </div>
 
-          <div class="form-row">
-            <div class="field">
-              <label for="purpose">Purpose of Visit</label>
-              <input id="purpose" name="purpose" placeholder="e.g. Reading, Research, Internet" autocomplete="off" />
-            </div>
-            <div class="field">
-              <label for="computer_serial">Computer Serial Number (if using a library PC)</label>
-              <input id="computer_serial" name="computer_serial" placeholder="e.g. KPL-PC-014" autocomplete="off" />
-            </div>
+          <div class="field">
+            <label for="computer_serial">Your Laptop / PC Serial Number</label>
+            <input id="computer_serial" name="computer_serial" placeholder="e.g. 5CD1234ABC (this is your own device, not the library's)" autocomplete="off" />
           </div>
 
           <button class="btn" type="submit" id="submit-btn">Check In</button>
@@ -62,13 +50,11 @@
   <script src="js/toast.js"></script>
   <script src="js/nav.js"></script>
   <script>
-    renderNav("checkin");
+    renderNav("Check In");
 
     const nameInput = document.getElementById("full_name");
     const idInput = document.getElementById("id_number");
-    const phoneInput = document.getElementById("phone");
     const suggestBox = document.getElementById("suggestions");
-    let selectedVisitorId = null;
     let debounceTimer = null;
 
     function hideSuggestions() {
@@ -84,9 +70,9 @@
         suggestBox.innerHTML = results
           .map(
             (v) => `
-              <div data-id="${v.id}" data-name="${escapeAttr(v.full_name)}" data-idnum="${escapeAttr(v.id_number || "")}" data-phone="${escapeAttr(v.phone || "")}">
+              <div data-id="${v.id}" data-name="${escapeAttr(v.full_name)}" data-idnum="${escapeAttr(v.id_number || "")}">
                 <div>${escapeHtml(v.full_name)}</div>
-                <div class="s-sub">${escapeHtml(v.id_number || "no ID on file")}${v.phone ? " · " + escapeHtml(v.phone) : ""}</div>
+                <div class="s-sub">${escapeHtml(v.id_number || "no ID on file")}</div>
               </div>`
           )
           .join("");
@@ -102,7 +88,6 @@
     function escapeAttr(s) { return escapeHtml(s); }
 
     nameInput.addEventListener("input", () => {
-      selectedVisitorId = null;
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => searchVisitors(nameInput.value), 200);
     });
@@ -112,8 +97,6 @@
       if (!row) return;
       nameInput.value = row.dataset.name;
       idInput.value = row.dataset.idnum;
-      phoneInput.value = row.dataset.phone;
-      selectedVisitorId = row.dataset.id;
       hideSuggestions();
     });
 
@@ -130,13 +113,10 @@
         await Api.post("/visits/checkin", {
           full_name: nameInput.value.trim(),
           id_number: idInput.value.trim(),
-          phone: phoneInput.value.trim(),
-          purpose: document.getElementById("purpose").value.trim(),
           computer_serial: document.getElementById("computer_serial").value.trim(),
         });
         toast(`${nameInput.value.trim()} checked in successfully`, "success");
         document.getElementById("checkin-form").reset();
-        selectedVisitorId = null;
         loadRecent();
         nameInput.focus();
       } catch (err) {
@@ -158,7 +138,7 @@
         const rows = active.slice(-8).reverse();
         host.innerHTML = `
           <table>
-            <thead><tr><th>Name</th><th>Computer</th><th>Since</th></tr></thead>
+            <thead><tr><th>Name</th><th>PC Serial</th><th>Since</th></tr></thead>
             <tbody>
               ${rows
                 .map(

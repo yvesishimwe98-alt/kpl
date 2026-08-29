@@ -34,10 +34,11 @@ a { color: var(--primary); text-decoration: none; }
   flex-wrap: wrap;
 }
 
-.topnav .brand { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.05rem; white-space: nowrap; }
+.topnav .brand { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.05rem; white-space: nowrap; color: #fff; text-decoration: none; }
 .brand-logo { width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0; }
 
-.nav-links { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.nav-links { display: flex; flex: 1; justify-content: center; gap: 0.25rem; flex-wrap: wrap; }
+.nav-page-title { color: #dbe7f5; font-size: 0.92rem; }
 
 .nav-links a {
   color: #dbe7f5;
@@ -211,6 +212,29 @@ tr:hover td { background: #fafbfc; }
 .chart-label { font-size: 0.65rem; color: var(--muted); margin-top: 0.3rem; }
 
 .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+
+.home-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.home-card {
+  display: block;
+  text-align: center;
+  padding: 2rem 1.25rem;
+  color: var(--text);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.home-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(16, 24, 40, 0.1); }
+.home-card-icon { font-size: 2.2rem; margin-bottom: 0.5rem; }
+.home-card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem; }
+.home-card-desc { color: var(--muted); font-size: 0.85rem; }
+
+.date-group-header {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--muted);
+  padding: 0.75rem 0.1rem 0.4rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.5rem;
+}
+.date-group-header:first-child { border-top: none; margin-top: 0; }
 
 .hint { font-size: 0.8rem; color: var(--muted); margin-top: -0.5rem; margin-bottom: 1rem; }
 
