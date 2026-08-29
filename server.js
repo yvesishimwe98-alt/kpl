@@ -38,11 +38,12 @@ app.use("/api/stats", statsRoutes);
 
 // --- Static frontend ---
 // No "public" folder: pages live at the project root alongside server.js,
-// but only /css and /js are ever exposed over HTTP. server.js, package.json,
-// .env and src/ stay unreachable because nothing mounts a static route for
-// the whole root directory.
+// but only /css, /js and /img are ever exposed over HTTP. server.js,
+// package.json, .env and src/ stay unreachable because nothing mounts a
+// static route for the whole root directory.
 app.use("/css", express.static(path.join(__dirname, "css")));
 app.use("/js", express.static(path.join(__dirname, "js")));
+app.use("/img", express.static(path.join(__dirname, "img")));
 
 app.get("/login.html", (req, res) => {
   res.sendFile(path.join(__dirname, "login.html"));
