@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Check In – KPL Visitor Register</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="nav-host"></div>
+
+  <div class="page">
+    <h1>Visitor Check-In</h1>
+    <p class="subtitle">Start typing a name, ID or phone number — returning visitors autofill instantly.</p>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <form id="checkin-form">
+          <div class="field autocomplete">
+            <label for="full_name">Full Name *</label>
+            <input id="full_name" name="full_name" autocomplete="off" required />
+            <div class="suggestions" id="suggestions" hidden></div>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="id_number">National ID / Passport Number</label>
+              <input id="id_number" name="id_number" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="phone">Phone Number</label>
+              <input id="phone" name="phone" autocomplete="off" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="purpose">Purpose of Visit</label>
+              <input id="purpose" name="purpose" placeholder="e.g. Reading, Research, Internet" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="computer_serial">Computer Serial Number (if using a library PC)</label>
+              <input id="computer_serial" name="computer_serial" placeholder="e.g. KPL-PC-014" autocomplete="off" />
+            </div>
+          </div>
+
+          <button class="btn" type="submit" id="submit-btn">Check In</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-top:0; font-size:1.05rem;">Just Checked In</h2>
+        <div id="recent-list" class="table-wrap">
+          <p class="empty-state">No one checked in yet today.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/toast.js"></script>
+  <script src="/js/nav.js"></script>
+  <script>
+    renderNav("checkin");
+
+    const nameInput = document.getElementById("full_name");
+    const idInput = document.getElementById("id_number");
+    const phoneInput = document.getElementById("phone");
+    const suggestBox = document.getElementById("suggestions");
+    let selectedVisitorId = null;
+    let debounceTimer = null;
+
+    function hideSuggestions() {
+      suggestBox.hidden = true;
+      suggestBox.innerHTML = "";
+    }
+
+    async function searchVisitors(q) {
+      if (q.trim().length < 2) return hideSuggestions();
+      try {
+        const results = await Api.get(`/visitors/lookup?q=${encodeURIComponent(q)}`);
+        if (!results.length) return hideSuggestions();
+        suggestBox.innerHTML = results
+          .map(
+            (v) => `
+              <div data-id="${v.id}" data-name="${escapeAttr(v.full_name)}" data-idnum="${escapeAttr(v.id_number || "")}" data-phone="${escapeAttr(v.phone || "")}">
+                <div>${escapeHtml(v.full_name)}</div>
+                <div class="s-sub">${escapeHtml(v.id_number || "no ID on file")}${v.phone ? " · " + escapeHtml(v.phone) : ""}</div>
+              </div>`
+          )
+          .join("");
+        suggestBox.hidden = false;
+      } catch (e) {
+        hideSuggestions();
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+    function escapeAttr(s) { return escapeHtml(s); }
+
+    nameInput.addEventListener("input", () => {
+      selectedVisitorId = null;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => searchVisitors(nameInput.value), 200);
+    });
+
+    suggestBox.addEventListener("click", (e) => {
+      const row = e.target.closest("[data-id]");
+      if (!row) return;
+      nameInput.value = row.dataset.name;
+      idInput.value = row.dataset.idnum;
+      phoneInput.value = row.dataset.phone;
+      selectedVisitorId = row.dataset.id;
+      hideSuggestions();
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".autocomplete")) hideSuggestions();
+    });
+
+    document.getElementById("checkin-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("submit-btn");
+      btn.disabled = true;
+      btn.textContent = "Checking in...";
+      try {
+        await Api.post("/visits/checkin", {
+          full_name: nameInput.value.trim(),
+          id_number: idInput.value.trim(),
+          phone: phoneInput.value.trim(),
+          purpose: document.getElementById("purpose").value.trim(),
+          computer_serial: document.getElementById("computer_serial").value.trim(),
+        });
+        toast(`${nameInput.value.trim()} checked in successfully`, "success");
+        document.getElementById("checkin-form").reset();
+        selectedVisitorId = null;
+        loadRecent();
+        nameInput.focus();
+      } catch (err) {
+        toast(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Check In";
+      }
+    });
+
+    async function loadRecent() {
+      const host = document.getElementById("recent-list");
+      try {
+        const active = await Api.get("/visits/active");
+        if (!active.length) {
+          host.innerHTML = '<p class="empty-state">No one checked in yet today.</p>';
+          return;
+        }
+        const rows = active.slice(-8).reverse();
+        host.innerHTML = `
+          <table>
+            <thead><tr><th>Name</th><th>Computer</th><th>Since</th></tr></thead>
+            <tbody>
+              ${rows
+                .map(
+                  (v) => `
+                <tr>
+                  <td>${escapeHtml(v.full_name)}</td>
+                  <td>${escapeHtml(v.computer_serial || "—")}</td>
+                  <td>${new Date(v.check_in_time + "Z").toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>`;
+      } catch (e) {
+        // nav.js already handles auth redirects
+      }
+    }
+
+    loadRecent();
+  </script>
+</body>
+</html>

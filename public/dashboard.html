@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>In the Library – KPL Visitor Register</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="nav-host"></div>
+
+  <div class="page">
+    <h1>Who's In the Library</h1>
+    <p class="subtitle">Live view — refreshes automatically every 15 seconds.</p>
+
+    <div class="grid grid-4" id="summary-cards">
+      <div class="card stat-card"><div class="value">—</div><div class="label">Currently In</div></div>
+      <div class="card stat-card"><div class="value">—</div><div class="label">Checked In Today</div></div>
+      <div class="card stat-card"><div class="value">—</div><div class="label">Computers In Use</div></div>
+      <div class="card stat-card warn"><div class="value">—</div><div class="label">Overdue (6h+)</div></div>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table id="active-table">
+          <thead>
+            <tr><th>Name</th><th>ID Number</th><th>Computer</th><th>Purpose</th><th>Checked In</th><th>Time In</th><th></th></tr>
+          </thead>
+          <tbody id="active-body">
+            <tr><td colspan="7" class="empty-state">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/toast.js"></script>
+  <script src="/js/nav.js"></script>
+  <script>
+    renderNav("dashboard");
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function formatElapsed(minutes) {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      return h > 0 ? `${h}h ${m}m` : `${m}m`;
+    }
+
+    async function checkout(id, name) {
+      if (!confirm(`Check out ${name}?`)) return;
+      try {
+        await Api.post(`/visits/${id}/checkout`, {});
+        toast(`${name} checked out`, "success");
+        load();
+      } catch (err) {
+        toast(err.message, "error");
+      }
+    }
+
+    async function load() {
+      try {
+        const [active, summary] = await Promise.all([
+          Api.get("/visits/active"),
+          Api.get("/stats/summary"),
+        ]);
+
+        const cards = document.querySelectorAll("#summary-cards .value");
+        cards[0].textContent = summary.currently_in;
+        cards[1].textContent = summary.today_visits;
+        cards[2].textContent = summary.computers_in_use;
+        cards[3].textContent = active.filter((v) => v.overdue).length;
+
+        const body = document.getElementById("active-body");
+        if (!active.length) {
+          body.innerHTML = '<tr><td colspan="7" class="empty-state">Nobody is currently checked in.</td></tr>';
+          return;
+        }
+
+        body.innerHTML = active
+          .map(
+            (v) => `
+            <tr>
+              <td>${escapeHtml(v.full_name)}</td>
+              <td>${escapeHtml(v.id_number || "—")}</td>
+              <td>${escapeHtml(v.computer_serial || "—")}</td>
+              <td>${escapeHtml(v.purpose || "—")}</td>
+              <td>${new Date(v.check_in_time + "Z").toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
+              <td>
+                ${v.overdue ? '<span class="badge badge-overdue">' : '<span class="badge badge-in">'}
+                ${formatElapsed(v.elapsed_minutes)}</span>
+              </td>
+              <td><button class="btn btn-sm btn-secondary" onclick="checkout(${v.id}, '${escapeHtml(v.full_name).replace(/'/g, "\\'")}')">Check Out</button></td>
+            </tr>`
+          )
+          .join("");
+      } catch (e) {
+        // handled by api.js redirect on auth failure
+      }
+    }
+
+    load();
+    setInterval(load, 15000);
+  </script>
+</body>
+</html>

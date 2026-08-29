@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Insights – KPL Visitor Register</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="nav-host"></div>
+
+  <div class="page">
+    <h1>Library Insights</h1>
+    <p class="subtitle">Usage patterns to help plan staffing, computers and opening hours.</p>
+
+    <div class="grid grid-4" id="summary-cards">
+      <div class="card stat-card"><div class="value">—</div><div class="label">Visits Today</div></div>
+      <div class="card stat-card"><div class="value">—</div><div class="label">Currently In</div></div>
+      <div class="card stat-card"><div class="value">—</div><div class="label">Avg Visit (min) Today</div></div>
+      <div class="card stat-card"><div class="value">—</div><div class="label">Known Visitors</div></div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h2 style="margin-top:0; font-size:1.05rem;">Busiest Hours (last 30 days)</h2>
+        <div class="chart-bar-row" id="hourly-chart"></div>
+      </div>
+      <div class="card">
+        <h2 style="margin-top:0; font-size:1.05rem;">Daily Visits (last 14 days)</h2>
+        <div class="chart-bar-row" id="daily-chart"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0; font-size:1.05rem;">Most-Used Computers</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Computer Serial</th><th>Times Used</th></tr></thead>
+          <tbody id="computers-body"><tr><td colspan="2" class="empty-state">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/nav.js"></script>
+  <script>
+    renderNav("stats");
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function renderBarChart(host, items, labelFn, valueFn) {
+      const max = Math.max(1, ...items.map(valueFn));
+      host.innerHTML = items
+        .map((item) => {
+          const v = valueFn(item);
+          const heightPct = Math.round((v / max) * 100);
+          return `
+            <div class="chart-bar-col" title="${labelFn(item)}: ${v}">
+              <div class="chart-bar" style="height:${Math.max(heightPct, v > 0 ? 4 : 0)}%"></div>
+              <div class="chart-label">${labelFn(item)}</div>
+            </div>`;
+        })
+        .join("");
+    }
+
+    async function load() {
+      try {
+        const [summary, hourly, daily, computers] = await Promise.all([
+          Api.get("/stats/summary"),
+          Api.get("/stats/hourly"),
+          Api.get("/stats/daily"),
+          Api.get("/stats/computers"),
+        ]);
+
+        const cards = document.querySelectorAll("#summary-cards .value");
+        cards[0].textContent = summary.today_visits;
+        cards[1].textContent = summary.currently_in;
+        cards[2].textContent = summary.avg_visit_minutes_today ?? "—";
+        cards[3].textContent = summary.total_known_visitors;
+
+        renderBarChart(
+          document.getElementById("hourly-chart"),
+          hourly,
+          (h) => String(h.hour).padStart(2, "0"),
+          (h) => h.count
+        );
+
+        renderBarChart(
+          document.getElementById("daily-chart"),
+          daily,
+          (d) => d.day.slice(5),
+          (d) => d.count
+        );
+
+        const body = document.getElementById("computers-body");
+        body.innerHTML = computers.length
+          ? computers
+              .map((c) => `<tr><td>${escapeHtml(c.computer_serial)}</td><td>${c.count}</td></tr>`)
+              .join("")
+          : '<tr><td colspan="2" class="empty-state">No computer usage recorded yet.</td></tr>';
+      } catch (e) {
+        // handled by api.js
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>History – KPL Visitor Register</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="nav-host"></div>
+
+  <div class="page">
+    <h1>Visit History</h1>
+    <p class="subtitle">Search, filter and export past check-ins — replaces the paper log book.</p>
+
+    <div class="card">
+      <div class="filters">
+        <div class="field">
+          <label for="q">Name / ID / Computer</label>
+          <input id="q" placeholder="Search…" />
+        </div>
+        <div class="field">
+          <label for="from">From</label>
+          <input id="from" type="date" />
+        </div>
+        <div class="field">
+          <label for="to">To</label>
+          <input id="to" type="date" />
+        </div>
+        <div class="field">
+          <label for="status">Status</label>
+          <select id="status">
+            <option value="">All</option>
+            <option value="in">Still In</option>
+            <option value="out">Checked Out</option>
+          </select>
+        </div>
+        <button class="btn" id="search-btn">Search</button>
+        <a class="btn btn-secondary" id="export-link" href="#" target="_blank">Export CSV</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>ID Number</th><th>Phone</th><th>Computer</th><th>Purpose</th><th>Check In</th><th>Check Out</th><th>Status</th></tr>
+          </thead>
+          <tbody id="rows">
+            <tr><td colspan="8" class="empty-state">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/toast.js"></script>
+  <script src="/js/nav.js"></script>
+  <script>
+    renderNav("history");
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+    function fmt(dt) {
+      if (!dt) return "—";
+      return new Date(dt + "Z").toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+    }
+
+    let page = 1;
+
+    function buildParams() {
+      const params = new URLSearchParams();
+      const q = document.getElementById("q").value.trim();
+      const from = document.getElementById("from").value;
+      const to = document.getElementById("to").value;
+      const status = document.getElementById("status").value;
+      if (q) params.set("q", q);
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+      if (status) params.set("status", status);
+      return params;
+    }
+
+    async function load() {
+      const params = buildParams();
+      params.set("page", page);
+      params.set("pageSize", 25);
+
+      document.getElementById("export-link").href = `/api/visits/export.csv?${buildParams().toString()}`;
+
+      try {
+        const { rows, total, pageSize } = await Api.get(`/visits?${params.toString()}`);
+        const body = document.getElementById("rows");
+        if (!rows.length) {
+          body.innerHTML = '<tr><td colspan="8" class="empty-state">No visits found for these filters.</td></tr>';
+        } else {
+          body.innerHTML = rows
+            .map(
+              (v) => `
+              <tr>
+                <td>${escapeHtml(v.full_name)}</td>
+                <td>${escapeHtml(v.id_number || "—")}</td>
+                <td>${escapeHtml(v.phone || "—")}</td>
+                <td>${escapeHtml(v.computer_serial || "—")}</td>
+                <td>${escapeHtml(v.purpose || "—")}</td>
+                <td>${fmt(v.check_in_time)}</td>
+                <td>${fmt(v.check_out_time)}</td>
+                <td><span class="badge ${v.status === "in" ? "badge-in" : "badge-out"}">${v.status === "in" ? "Still In" : "Checked Out"}</span></td>
+              </tr>`
+            )
+            .join("");
+        }
+
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        document.getElementById("pagination").innerHTML = `
+          <button class="btn btn-sm btn-secondary" id="prev-btn" ${page <= 1 ? "disabled" : ""}>Prev</button>
+          <span>Page ${page} of ${totalPages} (${total} total)</span>
+          <button class="btn btn-sm btn-secondary" id="next-btn" ${page >= totalPages ? "disabled" : ""}>Next</button>
+        `;
+        document.getElementById("prev-btn").addEventListener("click", () => { page--; load(); });
+        document.getElementById("next-btn").addEventListener("click", () => { page++; load(); });
+      } catch (e) {
+        // handled by api.js
+      }
+    }
+
+    document.getElementById("search-btn").addEventListener("click", () => { page = 1; load(); });
+    document.getElementById("q").addEventListener("keydown", (e) => { if (e.key === "Enter") { page = 1; load(); } });
+
+    load();
+  </script>
+</body>
+</html>
