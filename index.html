@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>57 Years of Grace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F1F0E2;
+    --surface:#FBFAF1;
+    --surface-raised:#FFFFFF;
+    --ink:#1E2A22;
+    --ink-soft:#4C5A50;
+    --ink-faint:#7C887C;
+    --primary:#2F5D50;
+    --primary-soft:#DCE7DF;
+    --accent:#C98A1F;
+    --accent-soft:#F3DFAE;
+    --rose:#B15C77;
+    --rose-soft:#F1DCE2;
+    --line:#D7D3C0;
+    --shadow: 0 18px 40px -22px rgba(30,42,34,0.35);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0B1912;
+      --surface:#122318;
+      --surface-raised:#16291D;
+      --ink:#F1EEDF;
+      --ink-soft:#C1CBBF;
+      --ink-faint:#8CA091;
+      --primary:#7FC8A9;
+      --primary-soft:#1D3A2C;
+      --accent:#F2B84B;
+      --accent-soft:#3A2E12;
+      --rose:#E39CB2;
+      --rose-soft:#3A222A;
+      --line:#26392C;
+      --shadow: 0 18px 44px -20px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0B1912;
+    --surface:#122318;
+    --surface-raised:#16291D;
+    --ink:#F1EEDF;
+    --ink-soft:#C1CBBF;
+    --ink-faint:#8CA091;
+    --primary:#7FC8A9;
+    --primary-soft:#1D3A2C;
+    --accent:#F2B84B;
+    --accent-soft:#3A2E12;
+    --rose:#E39CB2;
+    --rose-soft:#3A222A;
+    --line:#26392C;
+    --shadow: 0 18px 44px -20px rgba(0,0,0,0.6);
+  }
+
+  *{box-sizing:border-box;}
+  html{color-scheme: light dark;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Work Sans', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.6;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces', ui-serif, Georgia, serif;
+    font-weight:600;
+    text-wrap:balance;
+    color:var(--ink);
+    margin:0;
+  }
+  p{margin:0;}
+  .wrap{
+    max-width:900px;
+    margin:0 auto;
+    padding:0 28px;
+  }
+  .prose{max-width:62ch;}
+  .eyebrow{
+    font-size:0.78rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:600;
+  }
+  a{color:inherit;}
+
+  /* ---------- background starfield ---------- */
+  #stars{
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    opacity:0.55;
+  }
+
+  /* ---------- header / hero ---------- */
+  header.hero{
+    padding:88px 0 64px;
+    text-align:center;
+    position:relative;
+  }
+  .rule{
+    width:56px;
+    height:2px;
+    background:var(--accent);
+    margin:22px auto;
+    border-radius:2px;
+  }
+  .hero h1{
+    font-size:clamp(2.6rem, 7vw, 4.6rem);
+    line-height:1.02;
+    letter-spacing:-0.01em;
+  }
+  .hero .surname{
+    display:block;
+    font-style:italic;
+    font-weight:500;
+    color:var(--primary);
+    font-size:0.42em;
+    margin-top:6px;
+  }
+  .hero .tagline{
+    margin:22px auto 0;
+    max-width:44ch;
+    color:var(--ink-soft);
+    font-size:1.08rem;
+  }
+
+  .candle-panel{
+    margin:56px auto 0;
+    max-width:520px;
+  }
+  .age-number{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-weight:600;
+    font-size:clamp(4rem, 16vw, 7.5rem);
+    color:var(--primary);
+    line-height:1;
+  }
+  .age-caption{
+    color:var(--ink-faint);
+    font-size:0.85rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    margin-top:8px;
+  }
+  .candles{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    margin:34px 0 18px;
+    flex-wrap:wrap;
+  }
+  .candle{
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding:6px 4px 0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .flame{
+    width:11px;
+    height:15px;
+    border-radius:60% 60% 50% 50%;
+    background:var(--ink-faint);
+    opacity:0.35;
+    margin-bottom:2px;
+    transition:background .25s ease, opacity .25s ease, box-shadow .25s ease;
+  }
+  .candle.lit .flame{
+    background:radial-gradient(circle at 50% 30%, #FFF6D6, var(--accent) 70%);
+    opacity:1;
+    box-shadow:0 0 12px 2px var(--accent);
+    animation:flicker 1.6s ease-in-out infinite;
+  }
+  @keyframes flicker{
+    0%,100%{ transform:scale(1) rotate(0deg); }
+    35%{ transform:scale(1.08,0.94) rotate(-2deg); }
+    65%{ transform:scale(0.95,1.06) rotate(2deg); }
+  }
+  .stick{
+    width:8px;
+    height:34px;
+    border-radius:2px;
+    background:linear-gradient(180deg, var(--rose-soft), var(--rose));
+  }
+  .candle-hint{
+    color:var(--ink-faint);
+    font-size:0.9rem;
+  }
+  .candle-message{
+    margin-top:20px;
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:1.25rem;
+    color:var(--rose);
+    min-height:1.6em;
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity .5s ease, transform .5s ease;
+  }
+  .candle-message.show{ opacity:1; transform:translateY(0); }
+
+  /* ---------- section shell ---------- */
+  section{ padding:64px 0; }
+  .section-head{
+    text-align:center;
+    margin-bottom:44px;
+  }
+  .section-head h2{
+    font-size:clamp(1.7rem, 4vw, 2.3rem);
+    margin-top:10px;
+  }
+  .divider{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    color:var(--accent);
+  }
+  .divider::before, .divider::after{
+    content:"";
+    width:64px;
+    height:1px;
+    background:var(--line);
+  }
+
+  /* ---------- letter ---------- */
+  .letter{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:52px clamp(24px,6vw,64px);
+    box-shadow:var(--shadow);
+    margin:0 auto;
+    max-width:760px;
+  }
+  .letter p{ margin-bottom:18px; color:var(--ink-soft); font-size:1.05rem; }
+  .letter p:last-of-type{ margin-bottom:0; }
+  .letter .salute{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:1.5rem;
+    color:var(--primary);
+    margin-bottom:22px;
+    display:block;
+  }
+  .letter .sign{
+    margin-top:30px;
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    color:var(--ink);
+    font-size:1.15rem;
+  }
+
+  /* ---------- cards ---------- */
+  .card-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    gap:20px;
+  }
+  .flip-card{
+    perspective:1200px;
+    height:220px;
+  }
+  .flip-card button{
+    all:unset;
+    display:block;
+    width:100%;
+    height:100%;
+    cursor:pointer;
+  }
+  .flip-inner{
+    position:relative;
+    width:100%;
+    height:100%;
+    transition:transform .6s cubic-bezier(.2,.8,.2,1);
+    transform-style:preserve-3d;
+  }
+  .flip-card.flipped .flip-inner{ transform:rotateY(180deg); }
+  .flip-face{
+    position:absolute;
+    inset:0;
+    backface-visibility:hidden;
+    border-radius:8px;
+    border:1px solid var(--line);
+    padding:22px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+  }
+  .flip-front{
+    background:var(--surface-raised);
+    box-shadow:var(--shadow);
+  }
+  .flip-front .mark{
+    color:var(--accent);
+    font-size:1.4rem;
+    margin-bottom:10px;
+  }
+  .flip-front h3{
+    font-size:1.15rem;
+    color:var(--primary);
+  }
+  .flip-front .tap{
+    margin-top:10px;
+    font-size:0.78rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+  }
+  .flip-back{
+    background:var(--primary);
+    color:var(--primary-soft);
+    transform:rotateY(180deg);
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:1.05rem;
+    line-height:1.5;
+  }
+  .flip-back strong{ color:#fff; font-weight:600; font-style:normal; }
+  :root[data-theme="dark"] .flip-back, @media (prefers-color-scheme:dark){ }
+
+  /* ---------- poster ---------- */
+  .poster-wrap{ display:flex; justify-content:center; }
+  .poster{
+    width:100%;
+    max-width:520px;
+    background:var(--surface-raised);
+    border:1px solid var(--accent);
+    outline:1px solid var(--line);
+    outline-offset:8px;
+    border-radius:2px;
+    padding:56px 40px;
+    text-align:center;
+    box-shadow:var(--shadow);
+  }
+  .poster .years{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:2.6rem;
+    color:var(--primary);
+    letter-spacing:0.02em;
+  }
+  .poster .years span{ color:var(--accent); font-style:italic; font-weight:500; }
+  .poster .verse{
+    margin:28px 0 10px;
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:1.3rem;
+    line-height:1.55;
+    color:var(--ink);
+  }
+  .poster .verse-ref{
+    font-size:0.82rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+  }
+  .poster .name-plate{
+    margin-top:30px;
+    padding-top:24px;
+    border-top:1px dashed var(--line);
+    font-size:0.95rem;
+    color:var(--ink-soft);
+  }
+  .poster .name-plate b{ color:var(--primary); }
+
+  /* ---------- timeline ---------- */
+  .timeline{
+    position:relative;
+    max-width:680px;
+    margin:0 auto;
+    padding-left:26px;
+    border-left:2px solid var(--line);
+  }
+  .tl-item{
+    position:relative;
+    padding-bottom:38px;
+  }
+  .tl-item:last-child{ padding-bottom:0; }
+  .tl-item::before{
+    content:"";
+    position:absolute;
+    left:-32px;
+    top:4px;
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 0 4px var(--bg), 0 0 0 5px var(--line);
+  }
+  .tl-year{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    color:var(--primary);
+    font-size:1.05rem;
+    margin-bottom:4px;
+  }
+  .tl-text{ color:var(--ink-soft); }
+
+  /* ---------- closing ---------- */
+  .closing{
+    text-align:center;
+    padding:80px 0 40px;
+  }
+  .godspeed{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-weight:600;
+    font-size:clamp(2rem, 5vw, 3rem);
+    color:var(--primary);
+  }
+  .closing p.prose{
+    margin:22px auto 0;
+    color:var(--ink-soft);
+    max-width:48ch;
+  }
+  .closing .sign{
+    margin-top:34px;
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:1.2rem;
+  }
+  footer{
+    text-align:center;
+    padding:30px 0 60px;
+    color:var(--ink-faint);
+    font-size:0.85rem;
+    letter-spacing:0.04em;
+  }
+
+  /* ---------- confetti ---------- */
+  #confetti-layer{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:50;
+  }
+  .confetti-piece{
+    position:absolute;
+    top:-20px;
+    width:8px;
+    height:14px;
+    opacity:0.9;
+    animation:fall linear forwards;
+  }
+  @keyframes fall{
+    to{ transform:translateY(110vh) rotate(540deg); opacity:0.4; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .candle.lit .flame{ animation:none; }
+    .confetti-piece{ animation:none; display:none; }
+    .flip-inner{ transition:none; }
+  }
+
+  @media (max-width:520px){
+    .letter{ padding:36px 22px; }
+    .poster{ padding:40px 22px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+<div id="confetti-layer" aria-hidden="true"></div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">A day of thanksgiving &middot; September 4</p>
+    <div class="rule"></div>
+    <h1>Kayumba<span class="surname">Bernard</span></h1>
+    <p class="tagline">Fifty-seven years of life, carried every single day by a Family's love and the Lord's own hand.</p>
+
+    <div class="candle-panel">
+      <div class="age-number">57</div>
+      <p class="age-caption">Born 1969 &middot; Celebrated 2026</p>
+      <div class="candles" id="candles"></div>
+      <p class="candle-hint" id="candleHint">Light each candle for a year of God's faithfulness.</p>
+      <p class="candle-message" id="candleMessage">Happy Birthday, Dad. May the Lord keep you and give you many, many more.</p>
+    </div>
+  </div>
+</header>
+
+<section id="letter">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="divider"><span>&#10022;</span></div>
+      <h2>A Letter to You</h2>
+    </div>
+    <div class="letter">
+      <span class="salute">Dear Dad,</span>
+      <p>Today we pause the whole world just to say it plainly: we love you. Not the quiet, ordinary kind of love that goes without saying &mdash; the kind we want to shout, today of all days, so it reaches every corner of the year ahead of you.</p>
+      <p>Fifty-seven years is not a small thing. It is fifty-seven years of a hand that has never let go of you, even when the road bent in ways you didn't choose. We have watched the Lord guide your steps, and we believe He is not done &mdash; He is still guiding you, still going ahead of you, still writing more good chapters for your life.</p>
+      <p>So today we don't just wish you a happy birthday. We wish you more and more: more years, more strength, more laughter around your table, more mornings to wake up to a family that adores you. We wish your road to be smooth, your heart to be light, and your faith to keep carrying you the way it always has.</p>
+      <p>Go well, Dad. Go far. Godspeed.</p>
+      <span class="sign">With all our love &mdash; Your Family</span>
+    </div>
+  </div>
+</section>
+
+<section id="cards">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="divider"><span>&#10022;</span></div>
+      <h2>Voices That Love You</h2>
+    </div>
+    <div class="card-grid">
+
+      <div class="flip-card">
+        <button type="button" aria-pressed="false">
+          <div class="flip-inner">
+            <div class="flip-face flip-front">
+              <div class="mark">&#10022;</div>
+              <h3>Your Children</h3>
+              <p class="tap">Tap to read</p>
+            </div>
+            <div class="flip-face flip-back">
+              <p>You have always been our shelter. Everything steady in us, we learned by watching you. <strong>Happy Birthday, Dad.</strong></p>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div class="flip-card">
+        <button type="button" aria-pressed="false">
+          <div class="flip-inner">
+            <div class="flip-face flip-front">
+              <div class="mark">&#10022;</div>
+              <h3>Your Family</h3>
+              <p class="tap">Tap to read</p>
+            </div>
+            <div class="flip-face flip-back">
+              <p>Every gathering is warmer because you're in it. May the Lord fill your <strong>57th year</strong> with peace and plenty.</p>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div class="flip-card">
+        <button type="button" aria-pressed="false">
+          <div class="flip-inner">
+            <div class="flip-face flip-front">
+              <div class="mark">&#10022;</div>
+              <h3>Your Friends</h3>
+              <p class="tap">Tap to read</p>
+            </div>
+            <div class="flip-face flip-back">
+              <p>A good name and a good heart &mdash; that's what you've given this world. <strong>Godspeed</strong>, always.</p>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div class="flip-card">
+        <button type="button" aria-pressed="false">
+          <div class="flip-inner">
+            <div class="flip-face flip-front">
+              <div class="mark">&#10022;</div>
+              <h3>Your Church Family</h3>
+              <p class="tap">Tap to read</p>
+            </div>
+            <div class="flip-face flip-back">
+              <p>We've prayed beside you and watched Him answer. He isn't finished guiding you yet. <strong>Amen, and happy birthday.</strong></p>
+            </div>
+          </div>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="poster">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="divider"><span>&#10022;</span></div>
+      <h2>A Blessing for the Road Ahead</h2>
+    </div>
+    <div class="poster-wrap">
+      <div class="poster">
+        <p class="eyebrow">In celebration of</p>
+        <p class="years">Kayumba Bernard<br><span>57</span></p>
+        <p class="verse">&ldquo;The Lord bless you and keep you; the Lord make his face shine on you and be gracious to you; the Lord turn his face toward you and give you peace.&rdquo;</p>
+        <p class="verse-ref">Numbers 6:24&ndash;26</p>
+        <div class="name-plate">Born <b>1969</b> &middot; Celebrating <b>2026</b><br>Loved without measure, guided without end.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="timeline">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="divider"><span>&#10022;</span></div>
+      <h2>Your Journey So Far</h2>
+    </div>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-year">1969</div>
+        <div class="tl-text">A life begins &mdash; the first chapter of a story only the Lord could have written.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">Along the way</div>
+        <div class="tl-text">A family built on love, patience, and quiet faith that never once wavered.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">Every season</div>
+        <div class="tl-text">Hard roads and good ones alike, walked with a hand that was never really alone.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">Today, 2026</div>
+        <div class="tl-text">Fifty-seven years of grace &mdash; and still, still, still being guided.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="closing">
+  <div class="wrap">
+    <p class="eyebrow">And so we pray</p>
+    <p class="godspeed">Godspeed, Dad.</p>
+    <p class="prose">May the years ahead hold more than the years behind: more laughter, more health, more mornings with the people who love you, and more of the Lord's own hand on your shoulder as you go.</p>
+    <p class="sign">Happy Birthday &mdash; from your whole family, who loves you more than words hold.</p>
+  </div>
+</section>
+
+<footer>KAYUMBA BERNARD &middot; SEPTEMBER 4, 2026 &middot; 1969&ndash;2026</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- starfield ----------
+  var canvas = document.getElementById('stars');
+  var ctx = canvas.getContext('2d');
+  var stars = [];
+  function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  function initStars(){
+    stars = [];
+    var count = Math.floor((canvas.width * canvas.height) / 22000);
+    for (var i=0;i<count;i++){
+      stars.push({
+        x: Math.random()*canvas.width,
+        y: Math.random()*canvas.height,
+        r: Math.random()*1.4 + 0.3,
+        phase: Math.random()*Math.PI*2,
+        speed: 0.4 + Math.random()*0.6
+      });
+    }
+  }
+  var styleColor = getComputedStyle(document.documentElement);
+  function starColor(){
+    return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#C98A1F';
+  }
+  var t = 0;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    var col = starColor();
+    for (var i=0;i<stars.length;i++){
+      var s = stars[i];
+      var alpha = 0.35 + 0.65 * Math.abs(Math.sin(s.phase + t*0.001*s.speed));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fillStyle = col;
+      ctx.globalAlpha = alpha * 0.6;
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    t++;
+    if (!reduce) requestAnimationFrame(draw);
+  }
+  resize();
+  initStars();
+  window.addEventListener('resize', function(){ resize(); initStars(); });
+  if (!reduce){
+    requestAnimationFrame(draw);
+  } else {
+    draw();
+  }
+
+  // ---------- candles ----------
+  var candleWrap = document.getElementById('candles');
+  var TOTAL = 9;
+  var litCount = 0;
+  for (var i=0;i<TOTAL;i++){
+    var btn = document.createElement('button');
+    btn.className = 'candle';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Light candle ' + (i+1) + ' of ' + TOTAL);
+    btn.innerHTML = '<span class="flame"></span><span class="stick"></span>';
+    btn.addEventListener('click', function(e){
+      var c = e.currentTarget;
+      if (!c.classList.contains('lit')){
+        c.classList.add('lit');
+        litCount++;
+        if (litCount === TOTAL){
+          revealMessage();
+          burstConfetti();
+        }
+      }
+    });
+    candleWrap.appendChild(btn);
+  }
+
+  var hint = document.getElementById('candleHint');
+  var message = document.getElementById('candleMessage');
+  function revealMessage(){
+    hint.style.opacity = '0';
+    message.classList.add('show');
+  }
+
+  function burstConfetti(){
+    if (reduce) return;
+    var layer = document.getElementById('confetti-layer');
+    var colors = ['#C98A1F', '#2F5D50', '#B15C77', '#F2B84B'];
+    for (var i=0;i<50;i++){
+      var piece = document.createElement('span');
+      piece.className = 'confetti-piece';
+      piece.style.left = (Math.random()*100) + 'vw';
+      piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+      piece.style.animationDuration = (2.6 + Math.random()*1.8) + 's';
+      piece.style.animationDelay = (Math.random()*0.4) + 's';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      layer.appendChild(piece);
+      (function(p){
+        setTimeout(function(){ p.remove(); }, 5200);
+      })(piece);
+    }
+  }
+
+  // ---------- flip cards ----------
+  var flipCards = document.querySelectorAll('.flip-card');
+  flipCards.forEach(function(card){
+    var btn = card.querySelector('button');
+    btn.addEventListener('click', function(){
+      var flipped = card.classList.toggle('flipped');
+      btn.setAttribute('aria-pressed', flipped ? 'true' : 'false');
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
